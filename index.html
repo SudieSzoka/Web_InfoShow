@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的信息</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f1f1f1;
+        }
+        .tab-container {
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            margin: 20px;
+            padding: 10px;
+        }
+        .tab-list {
+            overflow: auto;
+            white-space: nowrap;
+        }
+        .tab {
+            background-color: #007BFF;
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: inline-block;
+            margin-right: 5px;
+            border-radius: 20px;
+            transition: background-color 0.3s;
+        }
+        .tab:hover {
+            background-color: #0056b3;
+        }
+        .sub-tab-container {
+            display: none;
+            margin-top: 10px;
+        }
+        .sub-tab {
+            background-color: #17a2b8;
+            color: #fff;
+            padding: 5px 15px;
+            cursor: pointer;
+            display: block;
+            margin-bottom: 3px;
+            border-radius: 15px;
+            transition: background-color 0.3s;
+        }
+        .sub-tab:hover {
+            background-color: #138496;
+        }
+        .info-card {
+            padding: 20px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="tab-container" class="tab-container">
+    <div class="tab-list" id="tab-list">
+        <!-- 一级选项卡 -->
+    </div>
+    <!-- 二级选项卡和信息卡 -->
+</div>
+
+<script>
+    function generateTabs(info) {
+        const tabList = document.getElementById('tab-list');
+        const container = document.getElementById('tab-container');
+
+        Object.keys(info).forEach((key, index) => {
+            // 创建一级选项卡
+            const tab = document.createElement('div');
+            tab.className = 'tab';
+            tab.textContent = key;
+            tab.onclick = () => {
+                document.querySelectorAll('.sub-tab-container').forEach(subTabContainer => {
+                    subTabContainer.style.display = 'none';
+                });
+                document.getElementById(`sub-tab-container-${index}`).style.display = 'block';
+            };
+            tabList.appendChild(tab);
+
+            // 创建对应的二级选项卡容器
+            const subTabContainer = document.createElement('div');
+            subTabContainer.className = 'sub-tab-container';
+            subTabContainer.id = `sub-tab-container-${index}`;
+            subTabContainer.style.display = 'none';
+            container.appendChild(subTabContainer);
+
+            Object.entries(info[key]).forEach(([subKey, value], subIndex) => {
+                // 创建二级选项卡
+                const subTab = document.createElement('div');
+                subTab.className = 'sub-tab';
+                subTab.textContent = subKey;
+                subTab.id = `sub-tab-${index}-${subIndex}`;
+
+                // 创建信息卡
+                const infoCard = document.createElement('div');
+                infoCard.className = 'info-card';
+                infoCard.id = `info-card-${index}-${subIndex}`;
+                infoCard.innerHTML = value;
+
+                // 添加点击事件
+                subTab.onclick = () => {
+                    const isActive = infoCard.style.display === 'block';
+                    infoCard.style.display = isActive ? 'none' : 'block';
+                    if (isActive) {
+                        localStorage.removeItem(subTab.id);
+                    } else {
+                        localStorage.setItem(subTab.id, 'true');
+                    }
+                };
+
+                // 将二级选项卡和信息卡加入到二级选项卡容器
+                subTabContainer.appendChild(subTab);
+                subTabContainer.appendChild(infoCard);
+            });
+        });
+
+        // 页面加载时恢复显示状态
+        restoreState();
+    }
+
+    function restoreState() {
+        const subTabs = document.querySelectorAll('.sub-tab');
+        subTabs.forEach(subTab => {
+            const subTabId = subTab.id;
+            const infoCardId = `info-card-${subTabId.split('-')[2]}-${subTabId.split('-')[3]}`;
+            const infoCard = document.getElementById(infoCardId);
+            if (localStorage.getItem(subTabId)) {
+                infoCard.style.display = 'block';
+            }
+        });
+    }
+
+    // 读取info.json获取内容
+    
+    fetch('info.json')
+        .then(response => response.json())
+        .then(data => generateTabs(data))
+        .catch(error => console.error('读取info.json失败:', error));
+  // 页面加载时恢复之前的二级选项卡开/关状态
+  window.onload = restoreState;
+</script>
+
+</body>
+</html>
